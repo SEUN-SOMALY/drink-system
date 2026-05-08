@@ -7,9 +7,23 @@ use Illuminate\Http\Request;
 
 class DrinkController extends Controller
 {
-    public function index()
+    public function dashboard()
     {
-        $drinks = Drink::all();
+        $totalDrinks = Drink::count();
+        $totalStock = Drink::sum('stock');
+        $lowStock = Drink::where('stock', '<=', 10)->count();
+
+        return view('dashboard', compact('totalDrinks', 'totalStock', 'lowStock'));
+    }
+
+    public function index(Request $request)
+    {
+        $search = $request->search;
+
+        $drinks = Drink::where('name', 'LIKE', "%$search%")
+            ->orderBy('id', 'desc')
+            ->paginate(5);
+
         return view('drinks.index', compact('drinks'));
     }
 
@@ -20,16 +34,25 @@ class DrinkController extends Controller
 
     public function store(Request $request)
     {
-        Drink::create($request->all());
+        $request->validate([
+            'name' => 'required',
+            'price' => 'required|numeric',
+            'stock' => 'required|integer',
+        ]);
 
-        return redirect()->route('drinks.index');
+        Drink::create($request->only(['name','price','stock']));
+
+        return redirect()->route('drinks.index')
+            ->with('success', 'Drink created successfully!');
     }
+
     public function show($id)
     {
         $drink = Drink::findOrFail($id);
 
         return view('drinks.show', compact('drink'));
     }
+
     public function edit($id)
     {
         $drink = Drink::findOrFail($id);
@@ -39,19 +62,24 @@ class DrinkController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'name' => 'required',
+            'price' => 'required|numeric',
+            'stock' => 'required|integer',
+        ]);
+
         $drink = Drink::findOrFail($id);
+        $drink->update($request->only(['name','price','stock']));
 
-        $drink->update($request->all());
-
-        return redirect()->route('drinks.index');
+        return redirect()->route('drinks.index')
+            ->with('success', 'Drink updated successfully!');
     }
 
     public function destroy($id)
     {
-        $drink = Drink::findOrFail($id);
+        Drink::findOrFail($id)->delete();
 
-        $drink->delete();
-
-        return redirect()->route('drinks.index');
+        return redirect()->route('drinks.index')
+            ->with('success', 'Drink deleted successfully!');
     }
 }

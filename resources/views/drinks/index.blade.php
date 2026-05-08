@@ -1,166 +1,75 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drink Management</title>
+@extends('layouts.app')
 
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+@section('content')
 
-<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+@if(session('success'))
+<div class="bg-green-100 text-green-700 p-3 rounded mb-3">
+    {{ session('success') }}
+</div>
+@endif
 
-    <div class="p-6 bg-gray-50 min-h-screen">
+<div class="flex justify-between mb-3">
+    <a href="{{ route('drinks.create') }}"
+       class="bg-blue-500 text-white px-3 py-2 rounded">
+        + Add Drink
+    </a>
 
-        <div class="max-w-6xl mx-auto">
+    <form method="GET">
+        <input type="text" name="search"
+               value="{{ request('search') }}"
+               placeholder="Search..."
+               class="border p-2 rounded">
+    </form>
+</div>
 
-            <!-- Header -->
-            <div class="flex items-center justify-between mb-6">
+<table class="w-full bg-white shadow rounded">
+    <thead>
+        <tr class="bg-gray-200">
+            <th class="p-2">Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Action</th>
+        </tr>
+    </thead>
 
-                <h1 class="text-2xl font-bold text-gray-800">
-                    Drink Management
-                </h1>
+    <tbody>
+    @forelse($drinks as $drink)
+        <tr class="text-center border-b">
+            <td>{{ $drink->name }}</td>
+            <td>${{ $drink->price }}</td>
+            <td>
+                @if($drink->stock > 10)
+                    <span class="text-green-600">OK</span>
+                @else
+                    <span class="text-red-600">LOW</span>
+                @endif
+            </td>
 
-                <a href="{{ route('drinks.create') }}"
-                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-sm">
+            <td>
+                <a href="{{ route('drinks.show', $drink->id) }}" class="text-blue-600">View</a>
+                <a href="{{ route('drinks.edit', $drink->id) }}" class="text-yellow-600 ml-2">Edit</a>
 
-                    + Add New Drink
+                <form method="POST" action="{{ route('drinks.destroy', $drink->id) }}" class="inline">
+                    @csrf
+                    @method('DELETE')
+                    <button onclick="return confirm('Delete?')" class="text-red-600 ml-2">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="4" class="p-4 text-center text-gray-500">
+                No data found
+            </td>
+        </tr>
+    @endforelse
+    </tbody>
+</table>
 
-                </a>
+<div class="mt-4">
+    {{ $drinks->withQueryString()->links() }}
+</div>
 
-            </div>
-
-            <!-- Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-
-                <table class="w-full text-left border-collapse">
-
-                    <!-- Table Head -->
-                    <thead class="bg-gray-50 border-b border-gray-200">
-
-                        <tr>
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                ID
-                            </th>
-
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Drink Name
-                            </th>
-
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Price
-                            </th>
-
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Stock Status
-                            </th>
-
-                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
-                                Actions
-                            </th>
-                        </tr>
-
-                    </thead>
-
-                    <!-- Table Body -->
-                    <tbody class="divide-y divide-gray-100">
-
-                        @foreach($drinks as $drink)
-
-                        <tr class="hover:bg-gray-50 transition-colors">
-
-                            <!-- ID -->
-                            <td class="px-6 py-4 text-sm text-gray-600">
-                                #{{ $drink->id }}
-                            </td>
-
-                            <!-- Drink Name -->
-                            <td class="px-6 py-4">
-
-                                <span class="text-sm font-medium text-gray-900">
-                                    {{ $drink->name }}
-                                </span>
-
-                            </td>
-
-                            <!-- Price -->
-                            <td class="px-6 py-4 text-sm text-gray-700">
-
-                                ${{ number_format($drink->price, 2) }}
-
-                            </td>
-
-                            <!-- Stock -->
-                            <td class="px-6 py-4">
-
-                                @if($drink->stock > 10)
-
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        {{ $drink->stock }} in stock
-                                    </span>
-
-                                @else
-
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        Low Stock ({{ $drink->stock }})
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-                            <!-- Actions -->
-                            <td class="px-6 py-4 text-right space-x-3">
-
-                                <!-- Show -->
-                                <a href="{{ route('drinks.show', $drink->id) }}"
-                                   class="text-green-600 hover:text-green-800 font-medium text-sm">
-
-                                    Show
-
-                                </a>
-
-                                <!-- Edit -->
-                                <a href="{{ route('drinks.edit', $drink->id) }}"
-                                   class="text-blue-600 hover:text-blue-900 font-medium text-sm">
-
-                                    Edit
-
-                                </a>
-
-                                <!-- Delete -->
-                                <form action="{{ route('drinks.destroy', $drink->id) }}"
-                                      method="POST"
-                                      class="inline-block">
-
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit"
-                                            onclick="return confirm('Are you sure?')"
-                                            class="text-red-500 hover:text-red-700 font-medium text-sm">
-
-                                        Delete
-
-                                    </button>
-
-                                </form>
-
-                            </td>
-
-                        </tr>
-
-                        @endforeach
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</body>
-</html>
+@endsection
