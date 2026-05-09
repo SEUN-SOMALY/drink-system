@@ -1,11 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OrderController;
+Route::get('/', [ProductController::class, 'dashboard'])->name('dashboard');
 
-use App\Http\Controllers\DrinkController;
+Route::resource('products', ProductController::class);
+Route::get('/orders', function () {
+    return view('orders.index');
+})->name('orders.index');
+// use App\Http\Controllers\OrderController;
 
-// Dashboard (HOME)
-Route::get('/', [DrinkController::class, 'dashboard'])->name('dashboard');
-// Route::get('/dashboard', [DrinkController::class, 'dashboard'])->name('dashboard');
-// CRUD
-Route::resource('drinks', DrinkController::class);
+Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
