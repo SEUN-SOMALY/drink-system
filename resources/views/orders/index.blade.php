@@ -12,16 +12,27 @@
         </div>
     @endif
 
-    <!-- ORDER FORM -->
+    <!-- SEARCH -->
+    <form method="GET" class="mb-4 flex gap-2">
+        <input type="text"
+               name="search"
+               value="{{ request('search') }}"
+               placeholder="Search customer or product..."
+               class="border p-2 w-full rounded">
+
+        <button class="bg-gray-700 text-white px-4 rounded">
+            Search
+        </button>
+    </form>
+
+    <!-- CREATE -->
     <form method="POST" action="{{ route('orders.store') }}" class="mb-6">
         @csrf
 
-        <!-- CUSTOMER NAME -->
         <input type="text" name="customer_name"
                placeholder="Customer Name"
                class="border p-2 w-full mb-2 rounded">
 
-        <!-- PRODUCT -->
         <select name="product_id" class="border p-2 w-full mb-2">
             <option value="">Select Product</option>
             @foreach($products as $product)
@@ -31,7 +42,6 @@
             @endforeach
         </select>
 
-        <!-- QUANTITY -->
         <input type="number" name="quantity"
                placeholder="Quantity"
                class="border p-2 w-full mb-2 rounded">
@@ -41,49 +51,71 @@
         </button>
     </form>
 
-    <!-- ORDER LIST (SCROLLABLE) -->
-<!-- ORDER LIST (SCROLLABLE FIXED) -->
-<div class="border rounded">
+    <!-- TABLE -->
+    <div class="border rounded">
+        <div class="h-[420px] overflow-y-auto">
 
-    <div class="max-h-80 overflow-y-auto">
+            <table class="w-full border-collapse">
 
-        <table class="w-full">
+                <thead class="bg-gray-200 sticky top-0 z-10">
+                    <tr>
+                        <th class="p-2">Customer</th>
+                        <th class="p-2">Product</th>
+                        <th class="p-2">Qty</th>
+                        <th class="p-2">Price</th>
+                        <th class="p-2">Subtotal</th>
+                        <th class="p-2">Total</th>
+                        <th class="p-2">Actions</th>
+                    </tr>
+                </thead>
 
-            <thead class="bg-gray-200 sticky top-0 z-10">
-                <tr>
-                    <th class="p-2">Customer</th>
-                    <th class="p-2">Product</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
+                <tbody>
+                    @forelse($orders as $order)
+                        <tr class="text-center border-t">
 
-            <tbody>
-            @foreach($orders as $order)
-                <tr class="text-center border-t">
+                            <td class="p-2">{{ $order->customer_name }}</td>
+                            <td class="p-2">{{ $order->product->name }}</td>
+                            <td class="p-2">{{ $order->quantity }}</td>
+                            <td class="p-2">${{ $order->product->price }}</td>
+                            <td class="p-2">
+                                ${{ $order->product->price * $order->quantity }}
+                            </td>
+                            <td class="p-2">${{ $order->total_price }}</td>
 
-                    <td>{{ $order->customer_name }}</td>
-                    <td>{{ $order->product->name }}</td>
-                    <td>{{ $order->quantity }}</td>
+                            <td class="p-2 flex justify-center gap-2">
 
-                    <td>${{ $order->product->price }}</td>
+                                <a href="{{ route('orders.edit', $order->id) }}"
+                                   class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                                    Edit
+                                </a>
 
-                    <td>
-                        ${{ $order->product->price * $order->quantity }}
-                    </td>
+                                <form method="POST"
+                                      action="{{ route('orders.destroy', $order->id) }}"
+                                      onsubmit="return confirm('Delete this order?')">
+                                    @csrf
+                                    @method('DELETE')
 
-                    <td>${{ $order->total_price }}</td>
+                                    <button class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+                                        Delete
+                                    </button>
+                                </form>
 
-                </tr>
-            @endforeach
-            </tbody>
+                            </td>
 
-        </table>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="p-4 text-gray-500">
+                                No orders found
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
 
+            </table>
+
+        </div>
     </div>
-
 
 </div>
 

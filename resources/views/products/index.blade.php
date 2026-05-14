@@ -3,18 +3,20 @@
 @section('content')
 
 @if(session('success'))
-<div class="bg-green-100 text-green-700 p-3 rounded mb-3">
+<div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm md:text-base">
     {{ session('success') }}
 </div>
 @endif
 
 <!-- Header -->
-<div class="flex justify-between items-center mb-4">
+<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4">
 
-    <h2 class="text-xl font-bold text-pink-600">🧴 Products</h2>
+    <h2 class="text-2xl font-bold text-pink-600">
+        🧴 Products
+    </h2>
 
     <a href="{{ route('products.create') }}"
-       class="bg-gradient-to-r from-pink-500 to-rose-400 text-white px-4 py-2 rounded-lg shadow hover:from-pink-600 hover:to-rose-500">
+       class="bg-gradient-to-r from-pink-500 to-rose-400 text-white px-4 py-2 rounded-lg shadow hover:from-pink-600 hover:to-rose-500 text-center w-full md:w-auto">
         + Add Product
     </a>
 
@@ -23,15 +25,16 @@
 <!-- Search -->
 <div class="mb-4">
     <form method="GET">
-        <input type="text" name="search"
+        <input type="text"
+               name="search"
                value="{{ request('search') }}"
                placeholder="Search skincare product..."
                class="border border-pink-200 focus:ring-2 focus:ring-pink-200 p-2 rounded-lg w-full md:w-1/3 outline-none">
     </form>
 </div>
 
-<!-- Table -->
-<div class="bg-white shadow rounded-lg overflow-hidden">
+<!-- Table Desktop -->
+<div class="hidden md:block bg-white shadow rounded-lg overflow-x-auto">
 
     <table class="w-full text-sm">
 
@@ -60,7 +63,9 @@
 
                 <td class="p-3">
                     @if($product->stock > 10)
-                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">In Stock</span>
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
+                            In Stock
+                        </span>
                     @else
                         <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
                             Low ({{ $product->stock }})
@@ -80,7 +85,10 @@
                         Edit
                     </a>
 
-                    <form method="POST" action="{{ route('products.destroy', $product->id) }}" class="inline">
+                    <form method="POST"
+                          action="{{ route('products.destroy', $product->id) }}"
+                          class="inline">
+
                         @csrf
                         @method('DELETE')
 
@@ -111,8 +119,80 @@
 
 </div>
 
+<!-- Mobile Card -->
+<div class="md:hidden space-y-4">
+
+    @forelse($products as $product)
+
+    <div class="bg-white shadow rounded-xl p-4">
+
+        <div class="flex justify-between items-start mb-3">
+
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg">
+                    {{ $product->name }}
+                </h3>
+
+                <p class="text-green-600 font-semibold">
+                    ${{ $product->price }}
+                </p>
+            </div>
+
+            <div>
+                @if($product->stock > 10)
+                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
+                        In Stock
+                    </span>
+                @else
+                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                        Low ({{ $product->stock }})
+                    </span>
+                @endif
+            </div>
+
+        </div>
+
+        <div class="flex flex-wrap gap-3 text-sm">
+
+            <a href="{{ route('products.show', $product->id) }}"
+               class="text-blue-600 hover:underline">
+                View
+            </a>
+
+            <a href="{{ route('products.edit', $product->id) }}"
+               class="text-yellow-600 hover:underline">
+                Edit
+            </a>
+
+            <form method="POST"
+                  action="{{ route('products.destroy', $product->id) }}">
+
+                @csrf
+                @method('DELETE')
+
+                <button onclick="return confirm('Delete this product?')"
+                        class="text-red-600 hover:underline">
+                    Delete
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    @empty
+
+    <div class="bg-white p-6 rounded-lg text-center text-gray-500 shadow">
+        No skincare products found 🧴
+    </div>
+
+    @endforelse
+
+</div>
+
 <!-- Pagination -->
-<div class="mt-4">
+<div class="mt-4 overflow-x-auto">
     {{ $products->withQueryString()->links() }}
 </div>
 

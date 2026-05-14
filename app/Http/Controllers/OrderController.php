@@ -8,33 +8,83 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
-        $orders = Order::latest()->get();
+        $search = $request->search;
 
-        return view('orders.index', compact('products', 'orders'));
+        $orders = Order::with('product')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('customer_name', 'like', "%$search%")
+                      ->orWhereHas('product', function ($p) use ($search) {
+                          $p->where('name', 'like', "%$search%");
+                      });
+                });
+            })
+            ->latest()
+            ->get();
+
+        $products = Product::all();
+        return view('orders.index', compact('orders', 'products'));
     }
 
     public function store(Request $request)
     {
+        // ✅ VALIDATION
         $request->validate([
-            'product_id' => 'required',
+            'customer_name' => 'required|string|max:255',
+            'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
-            'customer_name' => 'required' // ✅ ADD THIS
         ]);
 
         $product = Product::findOrFail($request->product_id);
 
-        $total = $product->price * $request->quantity;
-
         Order::create([
-            'product_id' => $product->id,
+            'customer_name' => $request->customer_name,
+            'product_id' => $request->product_id,
             'quantity' => $request->quantity,
-            'total_price' => $total,
-            'customer_name' => $request->customer_name // ✅ ADD THIS
+            'total_price' => $product->price * $request->quantity,
         ]);
 
-        return redirect()->back()->with('success', 'Order placed successfully!');
+        return redirect()->back()->with('success', 'Order created successfully');
+    }
+
+    public function edit($id)
+    {
+        $order = Order::findOrFail($id);
+        $products = Product::all();
+
+        return view('orders.edit', compact('order', 'products'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        // ✅ VALIDATION
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $order = Order::findOrFail($id);
+        $product = Product::findOrFail($request->product_id);
+
+        $order->update([
+            'customer_name' => $request->customer_name,
+            'product_id' => $request->product_id,
+            'quantity' => $request->quantity,
+            'total_price' => $product->price * $request->quantity,
+        ]);
+
+        return redirect()->route('orders.index')
+            ->with('success', 'Order updated successfully');
+    }
+
+    public function destroy($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->delete();
+
+        return redirect()->back()->with('success', 'Order deleted successfully');
     }
 }
